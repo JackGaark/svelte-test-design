@@ -1,5 +1,6 @@
 <script>
   import ParallaxSlider from '$lib/components/ParallaxSlider.svelte';
+  import SlidingIntro from '$lib/components/SlidingIntro.svelte';
   import PopUp from '$lib/components/PopUp.svelte';
   import { _ } from 'svelte-i18n';
   import { initI18n } from '$lib/components/i18n/i18n.js';
@@ -8,6 +9,18 @@
   import '../app.css';
 
   initI18n();
+
+  let introOpen = true;
+  let introZoom = 0;
+  async function openIntroProject(event) {
+    introOpen = false;
+    await tick();
+    if (isMobile && isLandscapeView) {
+      handleProjectUpdate(event.detail);
+    } else {
+      document.getElementById(`project-${event.detail}`)?.scrollIntoView();
+    }
+  }
 
   let modalOpen = false;
   function showModal() {
@@ -56,14 +69,14 @@
   // Slide in the next project vertically, if it exists.
   const nextProject = (project_index) => {
     console.log(project_index);
-    if (project_index < MAX_NUM_PROJECTS) {
+    if (containerEl && project_index < MAX_NUM_PROJECTS) {
       return (containerEl.style.transform = `translate(0px, ${0 - project_index * innerHeight}px)`);
     }
   };
 
   // Slide in vertically previous project if it exists.
   const prevProject = (project_index) => {
-    if (project_index >= 0 && project_index <= MAX_NUM_PROJECTS) {
+    if (containerEl && project_index >= 0 && project_index <= MAX_NUM_PROJECTS) {
       return (containerEl.style.transform = `translate(0px, ${0 - project_index * innerHeight}px)`);
     }
   };
@@ -1136,22 +1149,29 @@
 </svelte:head>
 <svelte:body
   on:viewportchanged={() => {
+    if (!viewport) return;
     innerWidth = viewport.Width;
     innerHeight = viewport.Height;
     debugger;
     handleProjectUpdate(current_project_index);
   }}
   on:resize={() => {
+    if (!viewport) return;
     innerWidth = viewport.Width;
     innerHeight = viewport.Height;
   }}
   on:orientationchangeend={() => {
+    if (!viewport) return;
     innerWidth = viewport.Width;
     innerHeight = viewport.Height;
     isLandscapeView = viewport.Orientation === 'landscape';
   }} />
 
+{#if introOpen}
+  <SlidingIntro bind:zoom={introZoom} projects={projectsArray.slice(0, MAX_DISPLAY_PROJECT)} studioOpen={modalOpen} on:select={openIntroProject} on:studio={showModal} on:closestudio={hideModal} />
+{:else}
 <div class="header">
+  <button class="intro-return" on:click={() => { introOpen = true; window.scrollTo(0, 0); }}>Index</button>
   <img src="images/dialog-icon.png" class="dialog-icon" alt="Dialog icon" on:click={showModal} />
 </div>
 <!-- Show a warning in portrait mode to rotate your phone. -->
@@ -1181,12 +1201,12 @@
     <img style="transform:translate(0%,-35%)" src="images/peace_hand.svg" alt="peace hand" />
   </div>
 </div>
-<PopUp bind:modalOpen isMobile={isMobile && isLandscapeView} />
 
 <main>
   <div class="container" bind:this={containerEl}>
     {#each projectsArray as project, i}
       {#if i < MAX_DISPLAY_PROJECT}
+        <div id={`project-${project.id}`}>
         <ParallaxSlider
           id={project.id}
           updateProjectIndex={(id) => handleProjectUpdate(id)}
@@ -1198,12 +1218,22 @@
           {innerHeight}
           slidesData={project.slidesData}
         />
+        </div>
       {/if}
     {/each}
   </div>
 </main>
+{/if}
+<PopUp bind:modalOpen isMobile={isMobile && isLandscapeView} />
 
 <style>
+  .intro-return {
+    border: 0;
+    background: transparent;
+    font-family: 'Opposit-Medium';
+    color: inherit;
+    cursor: pointer;
+  }
   :global(body) {
     padding: 0;
   }
