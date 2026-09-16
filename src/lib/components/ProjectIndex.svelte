@@ -27,6 +27,8 @@
   };
   let filter = 'All';
   let hovered = null;
+  let hoveredRowTop = 0;
+  let hoveredRowIndex = 0;
   $: visibleProjects = projects.filter(
     (project) =>
       filter === 'All' ||
@@ -41,7 +43,15 @@
   $: preview =
     activeProject?.id === 1
       ? '/images/intro/image-5.jpg'
+      : activeProject?.id === 7
+      ? '/images/intro/image-3.jpg'
       : activeProject?.slidesData.find((slide) => slide.type === 'image')?.src;
+  $: previewAbove = hoveredRowIndex >= Math.ceil(visibleProjects.length / 2);
+  function showPreview(event, project, index) {
+    hovered = project.id;
+    hoveredRowTop = event.currentTarget.offsetTop;
+    hoveredRowIndex = index;
+  }
   function chooseFilter(value) {
     filter = value;
     hovered = null;
@@ -59,12 +69,12 @@
     {/each}
   </div>
   <div class="rows" on:mouseleave={() => (hovered = null)}>
-    {#each visibleProjects as project (project.id)}
+    {#each visibleProjects as project, index (project.id)}
       <button
         class="project-row"
         class:highlighted={hovered === project.id}
-        on:mouseenter={() => (hovered = project.id)}
-        on:focus={() => (hovered = project.id)}
+        on:mouseenter={(event) => showPreview(event, project, index)}
+        on:focus={(event) => showPreview(event, project, index)}
         on:blur={() => (hovered = null)}
         on:click={() => dispatch('select', project.id)}
       >
@@ -74,7 +84,13 @@
       </button>
     {/each}
     {#if preview}
-      <img class="preview" src={preview.startsWith('/') ? preview : `/${preview}`} alt="" />
+      <img
+        class="preview"
+        class:above={previewAbove}
+        style={`top:${hoveredRowTop}px;`}
+        src={preview.startsWith('/') ? preview : `/${preview}`}
+        alt=""
+      />
     {/if}
   </div>
 </section>
@@ -139,13 +155,16 @@
   }
   .preview {
     position: absolute;
-    top: 52px;
     left: calc(49.23% - 74px);
     width: 383px;
-    height: 574px;
+    height: auto;
+    max-height: 488px;
     object-fit: cover;
     pointer-events: none;
     z-index: 1;
+  }
+  .preview.above {
+    transform: translateY(-100%);
   }
   @media (max-width: 1000px) {
     .project-row {
@@ -154,7 +173,7 @@
     .preview {
       left: 44%;
       width: 30vw;
-      height: 45vw;
+      max-height: 45vw;
     }
   }
   @media (max-width: 600px) {
