@@ -1,8 +1,7 @@
 <script>
-  import ParallaxSlider from '$lib/components/ParallaxSlider.svelte';
+  import ProjectView from '$lib/components/ProjectView.svelte';
   import SlidingIntro from '$lib/components/SlidingIntro.svelte';
   import PopUp from '$lib/components/PopUp.svelte';
-  import { _ } from 'svelte-i18n';
   import { initI18n } from '$lib/components/i18n/i18n.js';
   import { onMount, tick } from 'svelte';
   import { checkIsMobile } from '$lib/utils/helpers';
@@ -12,14 +11,13 @@
 
   let introOpen = true;
   let introZoom = 0;
+  let introView = 'work';
+  let selectedProjectId = 0;
   async function openIntroProject(event) {
+    selectedProjectId = event.detail;
     introOpen = false;
     await tick();
-    if (isMobile && isLandscapeView) {
-      handleProjectUpdate(event.detail);
-    } else {
-      document.getElementById(`project-${event.detail}`)?.scrollIntoView();
-    }
+    window.scrollTo(0, 0);
   }
 
   let modalOpen = false;
@@ -44,7 +42,6 @@
     isMobile = checkIsMobile(forceMobile);
     if (isMobile) {
       document.body.scrollTop = 0;
-      document.body.style.overflow = 'hidden';
     }
   });
 
@@ -60,34 +57,7 @@
     })();
   });
 
-  let containerEl;
   let MAX_DISPLAY_PROJECT = 17; //number of project before the more button
-  let MAX_NUM_PROJECTS = 17; // number of projects in html.
-  // Keep track of the currently displayed project state.
-  $: current_project_index = 0;
-
-  // Slide in the next project vertically, if it exists.
-  const nextProject = (project_index) => {
-    console.log(project_index);
-    if (containerEl && project_index < MAX_NUM_PROJECTS) {
-      return (containerEl.style.transform = `translate(0px, ${0 - project_index * innerHeight}px)`);
-    }
-  };
-
-  // Slide in vertically previous project if it exists.
-  const prevProject = (project_index) => {
-    if (containerEl && project_index >= 0 && project_index <= MAX_NUM_PROJECTS) {
-      return (containerEl.style.transform = `translate(0px, ${0 - project_index * innerHeight}px)`);
-    }
-  };
-
-  // Handles project state.
-  const handleProjectUpdate = (updated_project_index) => {
-    updated_project_index > current_project_index
-      ? nextProject(updated_project_index)
-      : prevProject(updated_project_index);
-    return (current_project_index = updated_project_index);
-  };
   const projectsArray = [
     {
       id: 0,
@@ -1152,8 +1122,6 @@
     if (!viewport) return;
     innerWidth = viewport.Width;
     innerHeight = viewport.Height;
-    debugger;
-    handleProjectUpdate(current_project_index);
   }}
   on:resize={() => {
     if (!viewport) return;
@@ -1168,12 +1136,18 @@
   }} />
 
 {#if introOpen}
-  <SlidingIntro bind:zoom={introZoom} projects={projectsArray.slice(0, MAX_DISPLAY_PROJECT)} studioOpen={modalOpen} on:select={openIntroProject} on:studio={showModal} on:closestudio={hideModal} />
+  <SlidingIntro bind:zoom={introZoom} initialView={introView} projects={projectsArray.slice(0, MAX_DISPLAY_PROJECT)} studioOpen={modalOpen} on:select={openIntroProject} on:studio={showModal} on:closestudio={hideModal} />
 {:else}
-<div class="header">
-  <button class="intro-return" on:click={() => { introOpen = true; window.scrollTo(0, 0); }}>Index</button>
-  <img src="images/dialog-icon.png" class="dialog-icon" alt="Dialog icon" on:click={showModal} />
-</div>
+<header class="project-header">
+  <button class="project-logo" aria-label="Super Bonjour home" on:click={() => { introView = 'work'; introOpen = true; window.scrollTo(0, 0); }}>
+    <img src="/images/intro/logo.png" alt="Super Bonjour" />
+  </button>
+  <nav aria-label="Project navigation">
+    <button class="active" on:click={() => { introView = 'work'; introOpen = true; window.scrollTo(0, 0); }}>WORK</button>
+    <button on:click={() => { introView = 'index'; introOpen = true; window.scrollTo(0, 0); }}>INDEX</button>
+    <button on:click={showModal}>STUDIO</button>
+  </nav>
+</header>
 <!-- Show a warning in portrait mode to rotate your phone. -->
 <div class="mobile-portrait" style={`width:${innerWidth ? innerWidth + 'px' : '100vw'}`}>
   <div style="position:relative">
@@ -1203,59 +1177,66 @@
 </div>
 
 <main>
-  <div class="container" bind:this={containerEl}>
-    {#each projectsArray as project, i}
-      {#if i < MAX_DISPLAY_PROJECT}
-        <div id={`project-${project.id}`}>
-        <ParallaxSlider
-          id={project.id}
-          updateProjectIndex={(id) => handleProjectUpdate(id)}
-          title={$_(project.title)}
-          titleFont="roc-grotesk"
-          title2={$_(project.title2)}
-          isMobile={isMobile && isLandscapeView}
-          {innerWidth}
-          {innerHeight}
-          slidesData={project.slidesData}
-        />
-        </div>
-      {/if}
-    {/each}
-  </div>
+  {#if projectsArray.find((project) => project.id === selectedProjectId)}
+    <ProjectView project={projectsArray.find((project) => project.id === selectedProjectId)} />
+  {/if}
 </main>
 {/if}
 <PopUp bind:modalOpen isMobile={isMobile && isLandscapeView} />
 
 <style>
-  .intro-return {
-    border: 0;
-    background: transparent;
-    font-family: 'Opposit-Medium';
-    color: inherit;
-    cursor: pointer;
-  }
   :global(body) {
     padding: 0;
   }
-  .container {
-    overflow: hidden;
-    transition: transform 0.5s linear;
+  .project-header {
+    position: absolute;
+    top: 20px;
+    left: 0;
+    right: 0;
+    z-index: 5;
+    max-width: 1440px;
+    height: 18px;
+    margin: 0 auto;
   }
-  .header {
-    position: fixed;
-    top: 0px;
-    right: 0px;
-    z-index: 1000;
-    font-family: 'Opposit-Medium';
-  }
-
-  .dialog-icon {
-    width: 64px;
-    height: 39px;
-    padding: 33px;
+  .project-header button {
+    padding: 0;
+    margin: 0;
+    border: 0;
+    background: transparent;
+    color: #000;
+    font-family: roc-grotesk, sans-serif;
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 12px;
     cursor: pointer;
-    margin-top: 28px;
-    margin-right: 25px;
+  }
+  .project-logo {
+    position: absolute;
+    left: 5.15%;
+    top: 0;
+    width: 44px;
+    height: 18px;
+  }
+  .project-logo img {
+    display: block;
+    width: 44px;
+    height: 18px;
+    object-fit: contain;
+  }
+  .project-header nav {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 16px;
+  }
+  .project-header button.active {
+    color: #bd62ff;
+  }
+  .project-header button:focus-visible {
+    outline: 2px solid #bd62ff;
+    outline-offset: 5px;
   }
   .mobile-portrait {
     display: none;
@@ -1283,54 +1264,9 @@
       margin-bottom: 1rem;
     }
   }
-  /* Landscape Mobile*/
-  @media screen and (max-width: 1200px) and (max-height: 499px) {
-    :global(html) {
-      height: 100%;
-      width: 100%;
-      height: 100vh;
-      width: 100vw;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background-color: #0000ff;
-    }
-    :global(body) {
-      padding: 0;
-      height: 100%;
-      width: 100%;
-      height: 100vh;
-      width: 100vw;
-      margin: 0;
-      overflow: hidden;
-      background-color: #0000ff;
-    }
-
-    .container {
-      overflow: visible;
-      transition: transform 0.5s linear;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      padding: 0;
-      margin: 0;
-    }
-    .dialog-icon {
-      width: 25px;
-      height: unset;
-      padding: 20px;
-      margin-top: 20px;
-      margin-right: 25px;
-    }
-  }
-
   @media screen and (max-width: 600px) {
-    .dialog-icon {
-      width: 37px;
-      height: 23px;
-      padding: 15px;
+    .project-logo {
+      left: 20px;
     }
   }
 </style>

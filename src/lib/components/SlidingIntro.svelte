@@ -3,14 +3,17 @@
   import { tweened } from 'svelte/motion';
   import { cubicOut } from 'svelte/easing';
   import { introLayouts } from './intro-layouts';
-  import { _ } from 'svelte-i18n';
+  import { featuredProjects } from './project-details';
   import ProjectIndex from './ProjectIndex.svelte';
 
   export let zoom = 0;
   export let projects = [];
   export let studioOpen = false;
-  let view = 'work';
+  export let initialView = 'work';
+  let view = initialView;
   let reducedMotion = true;
+  let snappingZoom = false;
+  let snapFrame = 0;
   const animatedZoom = tweened(zoom);
   onMount(() => {
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -19,19 +22,16 @@
     };
     update();
     preference.addEventListener('change', update);
-    return () => preference.removeEventListener('change', update);
+    return () => {
+      preference.removeEventListener('change', update);
+      cancelAnimationFrame(snapFrame);
+    };
   });
-  $: animatedZoom.set(zoom, { duration: reducedMotion ? 0 : 160, easing: cubicOut });
+  $: animatedZoom.set(zoom, {
+    duration: reducedMotion || snappingZoom ? 0 : 160,
+    easing: cubicOut
+  });
   const dispatch = createEventDispatcher();
-  const projectIds = [14, 3, 8, 7, 0, 13];
-  const clients = [
-    'DAVIDs TEA',
-    'Herschel Supply',
-    'Kombi Canada',
-    'Rise Kombucha',
-    'Herschel Supply',
-    'Super Bonjour'
-  ];
   let width = 1440;
   let scroller;
   let draggingZoom = false;
@@ -49,6 +49,15 @@
     const match = availableMiddleCards.findIndex((card) => card.asset === small.asset);
     return availableMiddleCards.splice(match, 1)[0];
   });
+  const largeCards = smallToMiddle.map((card, index) => {
+    const template = introLayouts[2].find((large) => large.asset === card.asset);
+    return {
+      x: 84 + index * 384,
+      y: template.y,
+      w: template.w,
+      h: template.h
+    };
+  });
   $: progress = Math.min($animatedZoom / 50, 1);
   $: largeProgress = Math.max(0, ($animatedZoom - 50) / 50);
   $: description =
@@ -58,9 +67,9 @@
     ? smallToMiddle
     : zoom === 50
     ? middleCards
-    : middleCards.slice(0, introLayouts[2].length)).map((middle, index) => {
+    : smallToMiddle).map((middle, index) => {
       const small = $animatedZoom < 50 ? introLayouts[0][index] || middle : middle;
-      const large = introLayouts[2][index] || middle;
+      const large = largeCards[index] || middle;
       return {
         ...middle,
         x: mix(mix(small.x, middle.x, progress), large.x, largeProgress),
@@ -73,19 +82,56 @@
   $: canvasHeight = Math.max(880, ...cards.map((c) => c.y + c.h + 77));
 
   function updateZoom(event) {
-    const value = Number(event.currentTarget.value);
-    zoom = draggingZoom
-      ? Math.abs(value - 50) <= 6
-        ? 50
-        : value >= 94
-        ? 100
-        : value
-      : value;
-    event.currentTarget.value = String(zoom);
+    cancelSnap();
+    zoom = Number(event.currentTarget.value);
     if (scroller) {
       scroller.scrollLeft = 0;
       scroller.scrollTop = 0;
     }
+  }
+
+  function cancelSnap() {
+    cancelAnimationFrame(snapFrame);
+    snapFrame = 0;
+    snappingZoom = false;
+  }
+
+  function finishZoomDrag() {
+    if (!draggingZoom) return;
+    draggingZoom = false;
+    const target = Math.abs(zoom - 50) <= 6 ? 50 : zoom >= 94 ? 100 : null;
+    if (target === null || target === zoom) return;
+    if (reducedMotion) {
+      zoom = target;
+      return;
+    }
+    const start = zoom;
+    const startedAt = performance.now();
+    snappingZoom = true;
+    const animate = (now) => {
+      const progress = Math.min((now - startedAt) / 220, 1);
+      zoom = start + (target - start) * cubicOut(progress);
+      if (progress < 1) {
+        snapFrame = requestAnimationFrame(animate);
+      } else {
+        zoom = target;
+        snapFrame = 0;
+        snappingZoom = false;
+      }
+    };
+    snapFrame = requestAnimationFrame(animate);
+  }
+
+  function handleZoomKeydown(event) {
+    const direction = ['ArrowRight', 'ArrowUp'].includes(event.key)
+      ? 1
+      : ['ArrowLeft', 'ArrowDown'].includes(event.key)
+      ? -1
+      : 0;
+    if (!direction) return;
+    event.preventDefault();
+    cancelSnap();
+    zoom = Math.max(0, Math.min(100, Math.round(zoom) + direction));
   }
 
   function handleGalleryWheel(event) {
@@ -96,7 +142,7 @@
 </script>
 
 <svelte:window
-  on:pointerup={() => (draggingZoom = false)}
+  on:pointerup={finishZoomDrag}
   on:pointercancel={() => (draggingZoom = false)}
 />
 
@@ -144,10 +190,14 @@
         type="range"
         min="0"
         max="100"
-        step="1"
+        step="0.1"
         value={zoom}
         on:input={updateZoom}
-        on:pointerdown={() => (draggingZoom = true)}
+        on:keydown={handleZoomKeydown}
+        on:pointerdown={() => {
+          cancelSnap();
+          draggingZoom = true;
+        }}
         aria-label="Image size"
         aria-valuetext={description}
       />
@@ -166,11 +216,8 @@
             style={`left:${card.x * scale}px;top:${card.y * scale}px;width:${
               card.w * scale
             }px;--caption-size:${mix(mix(3, 6, progress), 12, largeProgress) * scale}px;`}
-            aria-label={`View ${$_('slider.' + (projectIds[card.asset] + 1) + '.title').replace(
-              /\s*—\s*$/,
-              ''
-            )}`}
-            on:click={() => dispatch('select', projectIds[card.asset])}
+            aria-label={`View ${featuredProjects[card.asset].name}`}
+            on:click={() => dispatch('select', featuredProjects[card.asset].projectId)}
           >
             <img
               src={`/images/intro/image-${card.asset}.jpg`}
@@ -179,12 +226,9 @@
               style={`height:${card.h * scale}px;`}
             />
             <span class="caption">
-              <span
-                >{$_('slider.' + (projectIds[card.asset] + 1) + '.title').replace(/\s*—\s*$/, '')}
-                {$_('slider.' + (projectIds[card.asset] + 1) + '.title2')}</span
-              >
-              <span>{clients[card.asset]}</span>
-              <span>{$_('slider.' + (projectIds[card.asset] + 1) + '.title2')}</span>
+              <span>{featuredProjects[card.asset].name}</span>
+              <span>{featuredProjects[card.asset].client}</span>
+              <span>{featuredProjects[card.asset].year}</span>
             </span>
           </button>
         {/each}
