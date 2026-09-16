@@ -35,28 +35,53 @@
   let width = 1440;
   let scroller;
   $: scale = Math.max(width, 720) / 1440;
-  $: segment = $animatedZoom <= 50 ? 0 : 1;
-  $: progress = segment === 0 ? $animatedZoom / 50 : ($animatedZoom - 50) / 50;
+  // The Figma middle view repeats its three-row pattern down the page.
+  const middleCards = Array.from({ length: 4 }, (_, repeat) =>
+    introLayouts[1].map((card, index) => ({
+      ...card,
+      id: repeat * introLayouts[1].length + index,
+      y: card.y + repeat * 720
+    }))
+  ).flat();
+  const availableMiddleCards = [...middleCards];
+  const smallToMiddle = introLayouts[0].map((small) => {
+    const match = availableMiddleCards.findIndex((card) => card.asset === small.asset);
+    return availableMiddleCards.splice(match, 1)[0];
+  });
+  $: progress = Math.min($animatedZoom / 50, 1);
+  $: largeProgress = Math.max(0, ($animatedZoom - 50) / 50);
   $: description =
     zoom < 25 ? 'Dense overview' : zoom < 75 ? 'Medium gallery' : 'Large horizontal gallery';
   const mix = (a, b, t) => a + (b - a) * t;
-  $: cards = introLayouts[segment].map((from) => {
-    const to = introLayouts[segment + 1].find((item) => item.id === from.id);
-    return {
-      ...from,
-      x: mix(from.x, to?.x ?? from.x, progress),
-      y: mix(from.y, to?.y ?? from.y, progress),
-      w: mix(from.w, to?.w ?? from.w, progress),
-      h: mix(from.h, to?.h ?? from.h, progress),
-      opacity: to ? 1 : 1 - progress,
-      visible: !!to || progress < 0.8
-    };
-  });
-  $: canvasWidth = Math.max(1440, ...cards.filter((c) => c.visible).map((c) => c.x + c.w + 84));
+  $: cards = ($animatedZoom < 50 && zoom < 50
+    ? smallToMiddle
+    : zoom === 50
+    ? middleCards
+    : middleCards.slice(0, introLayouts[2].length)).map((middle, index) => {
+      const small = $animatedZoom < 50 ? introLayouts[0][index] || middle : middle;
+      const large = introLayouts[2][index] || middle;
+      return {
+        ...middle,
+        x: mix(mix(small.x, middle.x, progress), large.x, largeProgress),
+        y: mix(mix(small.y, middle.y, progress), large.y, largeProgress),
+        w: mix(mix(small.w, middle.w, progress), large.w, largeProgress),
+        h: mix(mix(small.h, middle.h, progress), large.h, largeProgress)
+      };
+    });
+  $: canvasWidth = Math.max(1440, ...cards.map((c) => c.x + c.w + 84));
+  $: canvasHeight = Math.max(880, ...cards.map((c) => c.y + c.h + 77));
 
   function updateZoom() {
-    // Return to the start of the strip when changing magnification.
-    if (scroller) scroller.scrollLeft = 0;
+    if (scroller) {
+      scroller.scrollLeft = 0;
+      scroller.scrollTop = 0;
+    }
+  }
+
+  function handleGalleryWheel(event) {
+    if (zoom !== 100 || !scroller || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+    event.preventDefault();
+    scroller.scrollLeft += event.deltaY;
   }
 </script>
 
@@ -111,20 +136,20 @@
         aria-valuetext={description}
       />
     </div>
-    <div class="gallery-scroll" bind:this={scroller}>
-      <div class="canvas" style={`width:${canvasWidth * scale}px;height:${880 * scale}px;`}>
+    <div
+      class="gallery-scroll"
+      class:vertical={zoom === 50}
+      class:horizontal={zoom === 100}
+      bind:this={scroller}
+      on:wheel|nonpassive={handleGalleryWheel}
+    >
+      <div class="canvas" style={`width:${canvasWidth * scale}px;height:${canvasHeight * scale}px;`}>
         {#each cards as card (card.id)}
           <button
             class="image-card"
             style={`left:${card.x * scale}px;top:${card.y * scale}px;width:${
               card.w * scale
-            }px;opacity:${card.opacity};pointer-events:${
-              card.visible ? 'auto' : 'none'
-            };--caption-size:${
-              mix(segment === 0 ? 3 : 6, segment === 0 ? 6 : 12, progress) * scale
-            }px;`}
-            tabindex={card.visible ? 0 : -1}
-            aria-hidden={!card.visible}
+            }px;--caption-size:${mix(mix(3, 6, progress), 12, largeProgress) * scale}px;`}
             aria-label={`View ${$_('slider.' + (projectIds[card.asset] + 1) + '.title').replace(
               /\s*—\s*$/,
               ''
@@ -287,6 +312,17 @@
     padding-top: max(0px, calc(90px - 7.85vw));
     overflow: auto;
     overscroll-behavior-x: contain;
+  }
+  .gallery-scroll.vertical {
+    height: 100vh;
+    box-sizing: border-box;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
+  .gallery-scroll.horizontal {
+    overflow-x: auto;
+    overflow-y: hidden;
   }
   .canvas {
     position: relative;
