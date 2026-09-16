@@ -34,6 +34,7 @@
   ];
   let width = 1440;
   let scroller;
+  let draggingZoom = false;
   $: scale = Math.max(width, 720) / 1440;
   // The Figma middle view repeats its three-row pattern down the page.
   const middleCards = Array.from({ length: 4 }, (_, repeat) =>
@@ -71,7 +72,16 @@
   $: canvasWidth = Math.max(1440, ...cards.map((c) => c.x + c.w + 84));
   $: canvasHeight = Math.max(880, ...cards.map((c) => c.y + c.h + 77));
 
-  function updateZoom() {
+  function updateZoom(event) {
+    const value = Number(event.currentTarget.value);
+    zoom = draggingZoom
+      ? Math.abs(value - 50) <= 6
+        ? 50
+        : value >= 94
+        ? 100
+        : value
+      : value;
+    event.currentTarget.value = String(zoom);
     if (scroller) {
       scroller.scrollLeft = 0;
       scroller.scrollTop = 0;
@@ -84,6 +94,11 @@
     scroller.scrollLeft += event.deltaY;
   }
 </script>
+
+<svelte:window
+  on:pointerup={() => (draggingZoom = false)}
+  on:pointercancel={() => (draggingZoom = false)}
+/>
 
 <section class="intro" aria-label="Selected work" bind:clientWidth={width}>
   <div class="guide-vertical" aria-hidden="true" />
@@ -130,8 +145,9 @@
         min="0"
         max="100"
         step="1"
-        bind:value={zoom}
+        value={zoom}
         on:input={updateZoom}
+        on:pointerdown={() => (draggingZoom = true)}
         aria-label="Image size"
         aria-valuetext={description}
       />
