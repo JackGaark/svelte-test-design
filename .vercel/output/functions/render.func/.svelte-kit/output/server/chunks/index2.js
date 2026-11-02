@@ -77,6 +77,13 @@ function escape_attribute_value(value) {
   const should_escape = typeof value === "string" || value && typeof value === "object";
   return should_escape ? escape(value, true) : value;
 }
+function each(items, fn) {
+  let str = "";
+  for (let i = 0; i < items.length; i += 1) {
+    str += fn(items[i], i);
+  }
+  return str;
+}
 const missing_component = {
   $$render: () => ""
 };
@@ -144,10 +151,11 @@ export {
   create_ssr_component as c,
   add_attribute as d,
   escape as e,
-  add_styles as f,
+  each as f,
   getContext as g,
-  safe_not_equal as h,
-  is_function as i,
+  add_styles as h,
+  safe_not_equal as i,
+  is_function as j,
   missing_component as m,
   noop as n,
   run_all as r,

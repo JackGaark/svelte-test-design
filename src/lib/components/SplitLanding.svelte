@@ -7,12 +7,15 @@
   let touchStart = 0;
   let entering = false;
   function enter() { if (!studioOpen && !entering) { entering = true; dispatch('enter'); } }
+  // Reference: 10 fps, alternating cuts; each panel changes at 5 Hz.
+  const CUT_INTERVAL_MS = 100;
   let current = 0;
+  let bottomCurrent = 0;
+  let phase = 0;
   let paused = false;
   let reduced = false;
   let hidden = false;
-  let topVideo;
-  let bottomVideo;
+  const videoElements = new Set();
   let failed = false;
   const image = (file, alt, project = 11, position = '50% 50%') => ({ src: `/images/${file}.jpg`, alt, project, position });
   const video = (file, poster, project) => ({ src: `/videos/${file}.mp4`, type: 'video', poster: `/images/${poster}.jpg`, project, position: '50% 50%' });
@@ -37,19 +40,30 @@
   ];
   $: pair = pairs[current];
   $: running = !paused && !hidden && !studioOpen && view === 'work';
-  $: syncPlayback(topVideo, running);
-  $: syncPlayback(bottomVideo, running);
   function syncPlayback(element, play) {
-    if (!element) return;
+    element.muted = true;
     if (play) element.play().catch((error) => { if (error.name !== 'AbortError') failed = true; });
     else element.pause();
   }
+  function controlPlayback(element, state) {
+    videoElements.add(element);
+    let latest = state;
+    const apply = () => syncPlayback(element, latest.active && latest.play);
+    element.addEventListener('canplay', apply);
+    apply();
+    return {
+      update(next) { latest = next; apply(); },
+      destroy() { element.removeEventListener('canplay', apply); element.pause(); videoElements.delete(element); }
+    };
+  }
   function advance(direction) {
     current = (current + direction + pairs.length) % pairs.length;
+    bottomCurrent = current;
+    phase = 0;
     failed = false;
   }
   function togglePlayback() {
-    if (failed) { failed = false; paused = false; syncPlayback(topVideo, true); syncPlayback(bottomVideo, true); }
+    if (failed) { failed = false; paused = false; for (const element of videoElements) { if (element.dataset.active === 'true') syncPlayback(element, true); } }
     else paused = !paused;
   }
   
@@ -60,7 +74,13 @@
     updateMotion(); updateVisibility();
     query.addEventListener('change', updateMotion);
     document.addEventListener('visibilitychange', updateVisibility);
-    const timer = window.setInterval(() => { if (running && !reduced && !failed) advance(1); }, 6500);
+    const timer = window.setInterval(() => {
+      if (!running) return;
+      // Bottom cuts first, then top, matching the reference's 100 ms offset.
+      if (phase % 2 === 0) bottomCurrent = (bottomCurrent + 1) % pairs.length;
+      else current = (current + 1) % pairs.length;
+      phase += 1;
+    }, CUT_INTERVAL_MS);
     return () => { clearInterval(timer); query.removeEventListener('change', updateMotion); document.removeEventListener('visibilitychange', updateVisibility); };
   });
 </script>
@@ -86,22 +106,34 @@
 
 
     <main class="stage" aria-label="Selected creative work">
-      {#key current}
-        <div class="panel top">
-          {#if pair.top.type === 'video'}
-            <video bind:this={topVideo} src={pair.top.src} poster={pair.top.poster} muted playsinline loop preload="metadata" style:object-position={pair.top.position} on:canplay={() => syncPlayback(topVideo, running)} on:error={() => { failed = true; }} aria-label={`${pair.title} film`} />
+      <div class="panel top">
+        {#each pairs as item, index}
+          {#if item.top.type === 'video'}
+            <video src={item.top.src} poster={item.top.poster} muted playsinline loop preload="auto"
+              class:visible={index === current} aria-hidden={index !== current} data-active={index === current}
+              style:object-position={item.top.position}
+              use:controlPlayback={{ active: index === current, play: running }}
+              aria-label={`${item.title} film`} />
           {:else}
-            <img src={pair.top.src} alt={pair.top.alt} style:object-position={pair.top.position} />
+            <img src={item.top.src} alt={item.top.alt} class:visible={index === current}
+              aria-hidden={index !== current} style:object-position={item.top.position} />
           {/if}
-        </div>
-        <div class="panel bottom">
-          {#if pair.bottom.type === 'video'}
-            <video bind:this={bottomVideo} src={pair.bottom.src} poster={pair.bottom.poster} muted playsinline loop preload="metadata" style:object-position={pair.bottom.position} on:canplay={() => syncPlayback(bottomVideo, running)} on:error={() => { failed = true; }} aria-label={`${pair.title} film`} />
+        {/each}
+      </div>
+      <div class="panel bottom">
+        {#each pairs as item, index}
+          {#if item.bottom.type === 'video'}
+            <video src={item.bottom.src} poster={item.bottom.poster} muted playsinline loop preload="auto"
+              class:visible={index === bottomCurrent} aria-hidden={index !== bottomCurrent} data-active={index === bottomCurrent}
+              style:object-position={item.bottom.position}
+              use:controlPlayback={{ active: index === bottomCurrent, play: running }}
+              aria-label={`${item.title} film`} />
           {:else}
-            <img src={pair.bottom.src} alt={pair.bottom.alt} style:object-position={pair.bottom.position} />
+            <img src={item.bottom.src} alt={item.bottom.alt} class:visible={index === bottomCurrent}
+              aria-hidden={index !== bottomCurrent} style:object-position={item.bottom.position} />
           {/if}
-        </div>
-      {/key}
+        {/each}
+      </div>
       <div class="seam" aria-hidden="true"></div>
       <div class="identity">
         <p>Independent creative studio<br />Strategy, branding & content</p>
@@ -118,7 +150,7 @@
       <button class="edition" on:click={enter}>Scroll to explore ↓</button>
       <div class="sequence" aria-label="Media navigation">
         <button aria-label="Previous media pair" on:click={() => advance(-1)}>←</button>
-        <span class="count" aria-live="polite">{String(current + 1).padStart(2, '0')} <span>/ {String(pairs.length).padStart(2, '0')}</span></span>
+        <span class="count">{String(current + 1).padStart(2, '0')} <span>/ {String(pairs.length).padStart(2, '0')}</span></span>
         <button aria-label="Next media pair" on:click={() => advance(1)}>→</button>
       </div>
       <button class="playback" on:click={togglePlayback} aria-label={paused || failed ? 'Play media and sequence' : 'Pause media and sequence'}>{paused || failed ? '▶ Play' : 'Ⅱ Pause'}</button>
@@ -138,7 +170,8 @@
   nav .active::after { content: ''; position: absolute; bottom: 2px; left: 0; right: 0; height: 1px; background: currentColor; }
   .stage { position: relative; flex: 1; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); isolation: isolate; background: #4b4438; }
   .panel { overflow: hidden; min-height: 0; position: relative; }
-  .panel > img, .panel > video { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .panel > img, .panel > video { position: absolute; inset: 0; visibility: hidden; width: 100%; height: 100%; object-fit: cover; display: block; }
+  .panel > .visible { visibility: visible; }
   .panel::after { content: ''; position: absolute; inset: 0; background: #00000015; pointer-events: none; }
   .seam { position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #edeae285; z-index: 1; }
   .identity { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2; color: #fffdf4; text-align: center; display: flex; flex-direction: column; align-items: center; width: 290px; text-shadow: 0 1px 8px #0008; }
