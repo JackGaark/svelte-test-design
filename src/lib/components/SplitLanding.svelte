@@ -30,7 +30,7 @@
   ];
   const DEFAULT_CUT_INTERVAL_MS = 300;
   const CENTER_CUT_INTERVAL_MS = 100;
-  const EDGE_CUT_INTERVAL_MS = 1200;
+  const EDGE_CUT_INTERVAL_MS = 2000;
   let cutInterval = DEFAULT_CUT_INTERVAL_MS;
   let leftCurrent = 0;
   let rightCurrent = 0;
