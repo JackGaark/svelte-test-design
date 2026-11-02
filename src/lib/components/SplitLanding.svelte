@@ -34,7 +34,7 @@
   let cutInterval = DEFAULT_CUT_INTERVAL_MS;
   let leftCurrent = 0;
   let rightCurrent = 0;
-  let nextPanel = 'right';
+  let leftCuts = 0;
   let paused = false;
   let hidden = false;
   let ready = false;
@@ -69,16 +69,16 @@
   function advance(direction) {
     leftCurrent = (leftCurrent + direction + pairs.length) % pairs.length;
     rightCurrent = leftCurrent;
-    nextPanel = 'right';
+    leftCuts = 0;
   }
 
   function alternate() {
-    if (nextPanel === 'right') {
+    if (leftCuts === 3) {
       rightCurrent = (rightCurrent + 1) % pairs.length;
-      nextPanel = 'left';
+      leftCuts = 0;
     } else {
       leftCurrent = (leftCurrent + 1) % pairs.length;
-      nextPanel = 'right';
+      leftCuts += 1;
     }
   }
 
@@ -179,7 +179,7 @@
 
 <style>
   .landing { position: relative; height: 100svh; min-height: 320px; background: #fff; }
-  .stage { position: absolute; inset: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .stage { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .panel { position: relative; overflow: hidden; }
   .media { position: absolute; inset: 0; visibility: hidden; }
   .media.visible { visibility: visible; }
