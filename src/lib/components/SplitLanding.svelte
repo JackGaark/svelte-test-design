@@ -135,12 +135,6 @@
         {/each}
       </div>
       <div class="seam" aria-hidden="true"></div>
-      <div class="identity">
-        <p>Independent creative studio<br />Strategy, branding & content</p>
-        <h1><img src="/images/00-sb-logo-simple-white.svg" alt="Super Bonjour" width="500" height="214" /></h1>
-        <a href="mailto:salut@superbonjour.com">salut@superbonjour.com</a>
-        <a href="https://www.instagram.com/super_bonjour/" target="_blank" rel="noreferrer">@super_bonjour ↗</a>
-      </div>
       <span class="corner top-left">A considered point of view.</span>
       <span class="corner top-right">Independent by design.</span>
       <div class="caption"><span>{pair.title}</span><span>{pair.category}</span></div>
@@ -174,12 +168,6 @@
   .panel > .visible { visibility: visible; }
   .panel::after { content: ''; position: absolute; inset: 0; background: #00000015; pointer-events: none; }
   .seam { position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #edeae285; z-index: 1; }
-  .identity { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2; color: #fffdf4; text-align: center; display: flex; flex-direction: column; align-items: center; width: 290px; text-shadow: 0 1px 8px #0008; }
-  .identity::before { content: ''; position: absolute; inset: -26px -38px; background: #0002; filter: blur(25px); z-index: -1; pointer-events: none; }
-  .identity p { margin: 0 0 19px; font-family: Georgia, serif; font-size: 14px; line-height: 1.25; }
-  h1 { margin: 0 0 19px; line-height: 0; }
-  h1 img { width: 180px; height: auto; filter: drop-shadow(0 1px 5px #0004); }
-  .identity a { color: #fffdf4; font-family: Georgia, serif; font-size: 12px; line-height: 1.35; }
   .corner { position: absolute; top: 23px; color: #fffdf4; font-size: 10px; font-family: 'Opposit-Medium', sans-serif; text-shadow: 0 1px 5px #0009; }
   .top-left { left: 25px; } .top-right { right: 25px; }
   .caption { position: absolute; bottom: 24px; left: 25px; display: flex; flex-direction: column; gap: 4px; color: #fffdf4; font-family: 'Opposit-Medium', sans-serif; font-size: 12px; text-shadow: 0 1px 5px #0009; }
@@ -193,8 +181,8 @@
     .landing { padding: 0 16px; min-height: 500px; }
     header { height: 66px; } nav { gap: 18px; left: auto; right: 0; transform: none; } .hello { display: none; }
     footer { height: 65px; } .edition { max-width: 92px; font-size: 9px; line-height: 1.6; } .dash { margin: 0 3px; }
-    .sequence { gap: 5px; } .identity p { font-size: 12px; margin-bottom: 15px; } h1 img { width: 150px; } h1 { margin-bottom: 15px; }
-    .identity a { font-size: 11px; } .corner { top: 15px; font-size: 8px; } .top-left { left: 13px; } .top-right { right: 13px; }
+    .sequence { gap: 5px; }
+    .corner { top: 15px; font-size: 8px; } .top-left { left: 13px; } .top-right { right: 13px; }
     .caption { left: 13px; bottom: 17px; font-size: 10px; max-width: 65%; } .caption span + span { font-size: 10px; }
     .stage .explore { right: 13px; bottom: 12px; font-size: 9px; }
   }
