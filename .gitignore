@@ -4,5 +4,8 @@ node_modules
 /.svelte-kit
 /package
 todo.txt
-notes.txt.env*
+notes.txt
+.env*
 /.env*
+.vercel
+.vercel_build_output
