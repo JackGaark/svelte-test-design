@@ -28,7 +28,10 @@
     { title: 'Call It Spring / Rise', category: 'Art direction · Photography', top: image('21-sb_cis_8', 'Red beret portrait paired with a streetwear photograph', 11, '50% 35%'), bottom: image('22-sb_rise_3', 'Fashion compositions using bright red studio backdrops', 7, '50% 35%') },
     { title: 'Studio selections', category: 'Design · Campaign direction', top: image('23-sb-aluminium3', 'Aluminium design publication on vivid red fabric', 11), bottom: image('24-sb_cis_10', 'Model against a multicolored striped wall', 11) }
   ];
-  const CUT_INTERVAL_MS = 300;
+  const DEFAULT_CUT_INTERVAL_MS = 300;
+  const CENTER_CUT_INTERVAL_MS = 150;
+  const EDGE_CUT_INTERVAL_MS = 650;
+  let cutInterval = DEFAULT_CUT_INTERVAL_MS;
   let leftCurrent = 0;
   let rightCurrent = 0;
   let nextPanel = 'right';
@@ -79,6 +82,17 @@
     }
   }
 
+  function updateCutInterval(event) {
+    if (event.pointerType === 'touch') return;
+    const { left, top, width, height } = event.currentTarget.getBoundingClientRect();
+    const x = (event.clientX - left) / width * 2 - 1;
+    const y = (event.clientY - top) / height * 2 - 1;
+    const distance = Math.min(1, Math.hypot(x, y));
+    cutInterval = distance < 0.5
+      ? CENTER_CUT_INTERVAL_MS + distance * 2 * (DEFAULT_CUT_INTERVAL_MS - CENTER_CUT_INTERVAL_MS)
+      : DEFAULT_CUT_INTERVAL_MS + (distance - 0.5) * 2 * (EDGE_CUT_INTERVAL_MS - DEFAULT_CUT_INTERVAL_MS);
+  }
+
   onMount(() => {
     let mounted = true;
     const updateVisibility = () => { hidden = document.hidden; };
@@ -91,12 +105,22 @@
       img.onerror = resolve;
       img.src = src;
     }))).then(() => { if (mounted) ready = true; });
-    const timer = window.setInterval(() => {
-      if (ready && !paused && !hidden && !studioOpen) alternate();
-    }, CUT_INTERVAL_MS);
+    let lastCut;
+    let frame = requestAnimationFrame(tick);
+
+    function tick(now) {
+      if (!playing || lastCut === undefined) {
+        lastCut = now;
+      } else if (now - lastCut >= cutInterval) {
+        alternate();
+        lastCut = now;
+      }
+      frame = requestAnimationFrame(tick);
+    }
+
     return () => {
       mounted = false;
-      clearInterval(timer);
+      cancelAnimationFrame(frame);
       document.removeEventListener('visibilitychange', updateVisibility);
     };
   });
@@ -116,6 +140,8 @@
 }} />
 
 <div class="landing"
+  on:pointermove|passive={updateCutInterval}
+  on:pointerleave={() => { cutInterval = DEFAULT_CUT_INTERVAL_MS; }}
   on:wheel|passive={(event) => { if (event.deltaY > 45) enter(); }}
   on:touchstart|passive={(event) => { touchStart = event.touches[0].clientY; }}
   on:touchend|passive={(event) => { if (touchStart - event.changedTouches[0].clientY > 65) enter(); }}>
