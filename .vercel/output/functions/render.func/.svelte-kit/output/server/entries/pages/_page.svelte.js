@@ -1,4 +1,4 @@
-import { c as create_ssr_component, b as createEventDispatcher, d as add_attribute, f as each, e as escape, h as add_styles, a as subscribe, v as validate_component } from "../../chunks/index2.js";
+import { c as create_ssr_component, b as createEventDispatcher, d as each, f as add_attribute, e as escape, h as add_styles, a as subscribe, v as validate_component } from "../../chunks/index2.js";
 import { w as writable, d as derived } from "../../chunks/index.js";
 function getDefaultExportFromCjs(x) {
   return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, "default") ? x["default"] : x;
@@ -3904,15 +3904,13 @@ derived([$locale], () => formatDate);
 derived([$locale], () => formatNumber);
 derived([$locale, $dictionary], () => getJSON);
 const css$3 = {
-  code: ".landing.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe{--paper:#edeae2;background:var(--paper);height:100svh;min-height:520px;box-sizing:border-box;padding:0 3.4vw;display:flex;flex-direction:column;color:#26261f}.landing.svelte-7d6uoe button.svelte-7d6uoe.svelte-7d6uoe,.landing.svelte-7d6uoe a.svelte-7d6uoe.svelte-7d6uoe{font-family:'Opposit-Medium', Arial, sans-serif;color:inherit;font-size:11px;font-weight:400;letter-spacing:.015em}.landing.svelte-7d6uoe button.svelte-7d6uoe.svelte-7d6uoe{border:0;border-radius:0;background:transparent;padding:9px 0;margin:0;cursor:pointer}.landing.svelte-7d6uoe button.svelte-7d6uoe.svelte-7d6uoe:hover,.landing.svelte-7d6uoe a.svelte-7d6uoe.svelte-7d6uoe:hover{opacity:.65}.landing.svelte-7d6uoe button.svelte-7d6uoe.svelte-7d6uoe:focus-visible,.landing.svelte-7d6uoe a.svelte-7d6uoe.svelte-7d6uoe:focus-visible{outline:2px solid currentColor;outline-offset:5px}header.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe{height:84px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;position:relative}header.svelte-7d6uoe .wordmark.svelte-7d6uoe.svelte-7d6uoe{font-size:10px;line-height:.98;letter-spacing:-.04em;text-align:left}nav.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe{position:absolute;left:50%;transform:translateX(-50%);display:flex;gap:28px}nav.svelte-7d6uoe button.svelte-7d6uoe.svelte-7d6uoe{position:relative}nav.svelte-7d6uoe .active.svelte-7d6uoe.svelte-7d6uoe::after{content:'';position:absolute;bottom:2px;left:0;right:0;height:1px;background:currentColor}.stage.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe{position:relative;flex:1;min-height:0;display:grid;grid-template-rows:minmax(0, 1fr) minmax(0, 1fr);isolation:isolate;background:#4b4438}.panel.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe{overflow:hidden;min-height:0;position:relative}.panel.svelte-7d6uoe>img.svelte-7d6uoe.svelte-7d6uoe,.panel.svelte-7d6uoe>video.svelte-7d6uoe.svelte-7d6uoe{position:absolute;inset:0;visibility:hidden;width:100%;height:100%;object-fit:cover;display:block}.panel.svelte-7d6uoe>.visible.svelte-7d6uoe.svelte-7d6uoe{visibility:visible}.panel.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe::after{content:'';position:absolute;inset:0;background:#00000015;pointer-events:none}.seam.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe{position:absolute;top:50%;left:0;right:0;height:1px;background:#edeae285;z-index:1}.corner.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe{position:absolute;top:23px;color:#fffdf4;font-size:10px;font-family:'Opposit-Medium', sans-serif;text-shadow:0 1px 5px #0009}.top-left.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe{left:25px}.top-right.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe{right:25px}.caption.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe{position:absolute;bottom:24px;left:25px;display:flex;flex-direction:column;gap:4px;color:#fffdf4;font-family:'Opposit-Medium', sans-serif;font-size:12px;text-shadow:0 1px 5px #0009}.caption.svelte-7d6uoe span.svelte-7d6uoe+span.svelte-7d6uoe{font-family:Georgia, serif;font-size:12px}.stage.svelte-7d6uoe .explore.svelte-7d6uoe.svelte-7d6uoe{position:absolute;right:25px;bottom:19px;color:#fffdf4;text-shadow:0 1px 5px #0009}footer.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe{height:70px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;font-family:'Opposit-Medium', sans-serif;font-size:10px;position:relative}.sequence.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe{position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:24px}.sequence.svelte-7d6uoe button.svelte-7d6uoe.svelte-7d6uoe{padding:10px;font-size:18px}.count.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe{font-size:11px;font-variant-numeric:tabular-nums}.count.svelte-7d6uoe span.svelte-7d6uoe.svelte-7d6uoe{opacity:.45;margin-left:7px}@media(max-width: 600px){.landing.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe{padding:0 16px;min-height:500px}header.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe{height:66px}nav.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe{gap:18px;left:auto;right:0;transform:none}.hello.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe{display:none}footer.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe{height:65px}.edition.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe{max-width:92px;font-size:9px;line-height:1.6}.sequence.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe{gap:5px}.corner.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe{top:15px;font-size:8px}.top-left.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe{left:13px}.top-right.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe{right:13px}.caption.svelte-7d6uoe.svelte-7d6uoe.svelte-7d6uoe{left:13px;bottom:17px;font-size:10px;max-width:65%}.caption.svelte-7d6uoe span.svelte-7d6uoe+span.svelte-7d6uoe{font-size:10px}.stage.svelte-7d6uoe .explore.svelte-7d6uoe.svelte-7d6uoe{right:13px;bottom:12px;font-size:9px}}",
+  code: ".landing.svelte-niyda4.svelte-niyda4{position:relative;height:100svh;min-height:320px;background:#fff}.stage.svelte-niyda4.svelte-niyda4{position:absolute;inset:0;display:grid;grid-template-columns:minmax(0, 1fr) minmax(0, 1fr)}.panel.svelte-niyda4.svelte-niyda4{position:relative;overflow:hidden}.media.svelte-niyda4.svelte-niyda4{position:absolute;inset:0;visibility:hidden}.media.visible.svelte-niyda4.svelte-niyda4{visibility:visible}.crop.svelte-niyda4.svelte-niyda4{position:absolute;width:max(100%, 81.8182svh);height:max(100%, 61.1111vw);left:50%;top:50%;transform:translate(-50%, -50%)}.panel.svelte-niyda4 img.svelte-niyda4{position:absolute;max-width:none;display:block}.panel.svelte-niyda4 .sequence-image.svelte-niyda4{position:absolute;display:block;inset:0;width:100%;height:100%;object-fit:cover}.playback.svelte-niyda4.svelte-niyda4{position:absolute;right:16px;bottom:16px;min-width:44px;min-height:44px;color:white;font:10px 'Opposit-Medium', Arial, sans-serif;text-shadow:0 1px 4px #000}.still-life.svelte-niyda4 img.svelte-niyda4{width:208.45%;height:224.04%;left:-68.06%;top:-58.14%}.portrait.svelte-niyda4 img.svelte-niyda4{width:155.13%;height:169.09%;left:-27.56%;top:-34.55%}button.svelte-niyda4.svelte-niyda4{border:0;border-radius:0;margin:0;padding:0;background:transparent;cursor:pointer}button.svelte-niyda4.svelte-niyda4:focus-visible{outline:2px solid #bd62ff;outline-offset:4px}.wordmark.svelte-niyda4.svelte-niyda4{position:absolute;top:16px;left:50%;transform:translateX(-50%)}.wordmark.svelte-niyda4 img.svelte-niyda4{display:block;width:64px;height:27px}nav.svelte-niyda4.svelte-niyda4{position:absolute;bottom:41px;left:50%;transform:translateX(-50%);width:191px;height:47px;background:white;display:flex;align-items:center;justify-content:space-evenly}nav.svelte-niyda4 button.svelte-niyda4{font-family:'Opposit-Medium', Arial, sans-serif;font-size:10px;font-weight:500;line-height:14px;text-transform:uppercase;color:#000;min-height:44px;padding:0 8px}nav.svelte-niyda4 .active.svelte-niyda4,nav.svelte-niyda4 button.svelte-niyda4:hover{color:#bd62ff}@media(max-width: 600px){nav.svelte-niyda4.svelte-niyda4{bottom:max(24px, env(safe-area-inset-bottom))}}",
   map: null
 };
 const SplitLanding = create_ssr_component(($$result, $$props, $$bindings, slots) => {
-  let pair;
+  let activeIndices;
   let { studioOpen = false } = $$props;
   createEventDispatcher();
-  let current2 = 0;
-  let bottomCurrent = 0;
   const image = (file, alt, project = 11, position = "50% 50%") => ({
     src: `/images/${file}.jpg`,
     alt,
@@ -3923,10 +3921,23 @@ const SplitLanding = create_ssr_component(($$result, $$props, $$bindings, slots)
     src: `/videos/${file}.mp4`,
     type: "video",
     poster: `/images/${poster}.jpg`,
+    alt: `${file} campaign film`,
     project,
     position: "50% 50%"
   });
   const pairs = [
+    {
+      top: {
+        src: "/images/landing-rise.png",
+        alt: "White petals and dried flowers reflected in a pink and violet mirror",
+        crop: "still-life"
+      },
+      bottom: {
+        src: "/images/landing-accra.png",
+        alt: "Fashion portrait in amber sunglasses beneath a clear blue sky",
+        crop: "portrait"
+      }
+    },
     {
       title: "Fable Home",
       category: "Campaign direction · Still life",
@@ -4030,38 +4041,32 @@ const SplitLanding = create_ssr_component(($$result, $$props, $$bindings, slots)
       bottom: image("24-sb_cis_10", "Model against a multicolored striped wall", 11)
     }
   ];
+  let leftCurrent = 0;
+  let rightCurrent = 0;
+  let paused = false;
+  const panels = [pairs.map((pair) => pair.top), pairs.map((pair) => pair.bottom)];
   if ($$props.studioOpen === void 0 && $$bindings.studioOpen && studioOpen !== void 0) $$bindings.studioOpen(studioOpen);
   $$result.css.add(css$3);
-  pair = pairs[current2];
+  activeIndices = [leftCurrent, rightCurrent];
   return `
 
-<div class="landing svelte-7d6uoe"><header class="svelte-7d6uoe"><button class="wordmark svelte-7d6uoe" aria-label="Super Bonjour home">SUPER<br>BONJOUR</button>
-    <nav aria-label="Main navigation" class="svelte-7d6uoe"><button${add_attribute("aria-current", "page", 0)} class="${["svelte-7d6uoe", "active"].join(" ").trim()}">Work</button>
-      <button class="svelte-7d6uoe">Enter site ↗</button>
-      <button class="svelte-7d6uoe">Studio ↗</button></nav>
-    <a class="hello svelte-7d6uoe" href="mailto:salut@superbonjour.com">Say bonjour ↗</a></header>
+<div class="landing svelte-niyda4"><main class="stage svelte-niyda4" aria-label="Selected creative work">${each(panels, (items, panelIndex) => {
+    return `<div class="panel svelte-niyda4">${each(items, (item, index) => {
+      return `<div class="${[
+        "media svelte-niyda4",
+        index === activeIndices[panelIndex] ? "visible" : ""
+      ].join(" ").trim()}"${add_attribute("aria-hidden", index !== activeIndices[panelIndex], 0)}>${item.type === "video" ? `<video class="sequence-image svelte-niyda4"${add_attribute("src", item.src, 0)}${add_attribute("poster", item.poster, 0)} muted playsinline loop preload="auto"${add_attribute("aria-label", item.alt, 0)}${add_styles({ "object-position": item.position })}></video>` : `${item.crop ? `<div class="${"crop " + escape(item.crop, true) + " svelte-niyda4"}"><img${add_attribute("src", item.src, 0)}${add_attribute("alt", item.alt, 0)} class="svelte-niyda4"></div>` : `<img class="sequence-image svelte-niyda4"${add_attribute("src", item.src, 0)}${add_attribute("alt", item.alt, 0)}${add_styles({ "object-position": item.position })}>`}`}
+          </div>`;
+    })}
+      </div>`;
+  })}</main>
 
+  <button class="wordmark svelte-niyda4" aria-label="Super Bonjour home"><img src="/images/landing-wordmark.png" alt="Super Bonjour" width="64" height="27" class="svelte-niyda4"></button>
 
-    <main class="stage svelte-7d6uoe" aria-label="Selected creative work"><div class="panel top svelte-7d6uoe">${each(pairs, (item, index) => {
-    return `${item.top.type === "video" ? `<video${add_attribute("src", item.top.src, 0)}${add_attribute("poster", item.top.poster, 0)} muted playsinline loop preload="auto"${add_attribute("aria-hidden", index !== current2, 0)}${add_attribute("data-active", index === current2, 0)}${add_attribute("aria-label", `${item.title} film`, 0)} class="${["svelte-7d6uoe", index === current2 ? "visible" : ""].join(" ").trim()}"${add_styles({ "object-position": item.top.position })}></video>` : `<img${add_attribute("src", item.top.src, 0)}${add_attribute("alt", item.top.alt, 0)}${add_attribute("aria-hidden", index !== current2, 0)} class="${["svelte-7d6uoe", index === current2 ? "visible" : ""].join(" ").trim()}"${add_styles({ "object-position": item.top.position })}>`}`;
-  })}</div>
-      <div class="panel bottom svelte-7d6uoe">${each(pairs, (item, index) => {
-    return `${item.bottom.type === "video" ? `<video${add_attribute("src", item.bottom.src, 0)}${add_attribute("poster", item.bottom.poster, 0)} muted playsinline loop preload="auto"${add_attribute("aria-hidden", index !== bottomCurrent, 0)}${add_attribute("data-active", index === bottomCurrent, 0)}${add_attribute("aria-label", `${item.title} film`, 0)} class="${["svelte-7d6uoe", index === bottomCurrent ? "visible" : ""].join(" ").trim()}"${add_styles({ "object-position": item.bottom.position })}></video>` : `<img${add_attribute("src", item.bottom.src, 0)}${add_attribute("alt", item.bottom.alt, 0)}${add_attribute("aria-hidden", index !== bottomCurrent, 0)} class="${["svelte-7d6uoe", index === bottomCurrent ? "visible" : ""].join(" ").trim()}"${add_styles({ "object-position": item.bottom.position })}>`}`;
-  })}</div>
-      <div class="seam svelte-7d6uoe" aria-hidden="true"></div>
-      <span class="corner top-left svelte-7d6uoe">A considered point of view.</span>
-      <span class="corner top-right svelte-7d6uoe">Independent by design.</span>
-      <div class="caption svelte-7d6uoe"><span class="svelte-7d6uoe">${escape(pair.title)}</span><span class="svelte-7d6uoe">${escape(pair.category)}</span></div>
-      <button class="explore svelte-7d6uoe">Enter site ↗</button></main>
-    <footer class="svelte-7d6uoe"><button class="edition svelte-7d6uoe">Scroll to explore ↓</button>
-      <div class="sequence svelte-7d6uoe" aria-label="Media navigation"><button aria-label="Previous media pair" class="svelte-7d6uoe">←</button>
-        <span class="count svelte-7d6uoe">${escape(String(current2 + 1).padStart(2, "0"))} <span class="svelte-7d6uoe">/ ${escape(String(pairs.length).padStart(2, "0"))}</span></span>
-        <button aria-label="Next media pair" class="svelte-7d6uoe">→</button></div>
-      <button class="playback svelte-7d6uoe"${add_attribute(
-    "aria-label",
-    "Pause media and sequence",
-    0
-  )}>${escape("Ⅱ Pause")}</button></footer>
+  <nav aria-label="Main navigation" class="svelte-niyda4"><button class="active svelte-niyda4" aria-current="page">Work</button>
+    <button class="svelte-niyda4">Index</button>
+    <button class="svelte-niyda4">Studio</button></nav>
+  <button class="playback svelte-niyda4"${add_attribute("aria-label", "Pause media sequence", 0)}${add_attribute("aria-pressed", paused, 0)}>${escape("Pause")}</button>
 </div>`;
 });
 const css$2 = {
