@@ -29,7 +29,7 @@
     { title: 'Studio selections', category: 'Design · Campaign direction', top: image('23-sb-aluminium3', 'Aluminium design publication on vivid red fabric', 11), bottom: image('24-sb_cis_10', 'Model against a multicolored striped wall', 11) }
   ];
   const DEFAULT_CUT_INTERVAL_MS = 300;
-  const CENTER_CUT_INTERVAL_MS = 150;
+  const CENTER_CUT_INTERVAL_MS = 100;
   const EDGE_CUT_INTERVAL_MS = 1200;
   let cutInterval = DEFAULT_CUT_INTERVAL_MS;
   let leftCurrent = 0;
