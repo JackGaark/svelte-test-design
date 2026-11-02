@@ -1,6 +1,8 @@
 <script>
   import ProjectView from '$lib/components/ProjectView.svelte';
   import SlidingIntro from '$lib/components/SlidingIntro.svelte';
+  import SplitLanding from '$lib/components/SplitLanding.svelte';
+  import { fade } from 'svelte/transition';
   import PopUp from '$lib/components/PopUp.svelte';
   import { initI18n } from '$lib/components/i18n/i18n.js';
   import { onMount, tick } from 'svelte';
@@ -9,6 +11,7 @@
 
   initI18n();
 
+  let entranceOpen = true;
   let introOpen = true;
   let introZoom = 0;
   let introView = 'work';
@@ -1135,6 +1138,11 @@
     isLandscapeView = viewport.Orientation === 'landscape';
   }} />
 
+{#if entranceOpen}
+  <div class="entrance" out:fade={{ duration: 450 }}>
+    <SplitLanding studioOpen={modalOpen} on:enter={() => { entranceOpen = false; }} on:studio={showModal} />
+  </div>
+{:else}
 {#if introOpen}
   <SlidingIntro bind:zoom={introZoom} initialView={introView} projects={projectsArray.slice(0, MAX_DISPLAY_PROJECT)} studioOpen={modalOpen} on:select={openIntroProject} on:studio={showModal} on:closestudio={hideModal} />
 {:else}
@@ -1182,9 +1190,11 @@
   {/if}
 </main>
 {/if}
+{/if}
 <PopUp bind:modalOpen isMobile={isMobile && isLandscapeView} />
 
 <style>
+  .entrance { position: fixed; inset: 0; z-index: 20; overflow: auto; }
   :global(body) {
     padding: 0;
   }
