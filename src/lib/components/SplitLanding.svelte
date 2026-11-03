@@ -75,10 +75,8 @@
     if (event.pointerType === 'touch') return;
     const { left, width } = event.currentTarget.getBoundingClientRect();
     const position = (event.clientX - left) / width;
-    const distance = Math.abs(position - 0.5);
-    // Keep the middle third at full speed, then ease toward either edge.
-    const edgeProgress = Math.min(1, Math.max(0, (distance - 1 / 6) * 3));
-    const slowdown = edgeProgress ** 2;
+    const edgeProgress = Math.min(1, Math.abs(position - 0.5) * 2);
+    const slowdown = edgeProgress ** 2 * (3 - 2 * edgeProgress);
     const interval = CENTER_CUT_INTERVAL_MS + slowdown * (EDGE_CUT_INTERVAL_MS - CENTER_CUT_INTERVAL_MS);
     if (position < 0.5) {
       leftInterval = interval;
