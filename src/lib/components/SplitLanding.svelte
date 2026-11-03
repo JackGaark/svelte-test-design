@@ -31,10 +31,10 @@
   const DEFAULT_CUT_INTERVAL_MS = 300;
   const CENTER_CUT_INTERVAL_MS = 100;
   const EDGE_CUT_INTERVAL_MS = 2000;
-  let cutInterval = DEFAULT_CUT_INTERVAL_MS;
+  let leftInterval = DEFAULT_CUT_INTERVAL_MS;
+  let rightInterval = DEFAULT_CUT_INTERVAL_MS * 3;
   let leftCurrent = 0;
   let rightCurrent = 0;
-  let leftCuts = 0;
   let paused = false;
   let hidden = false;
   let ready = false;
@@ -68,29 +68,25 @@
 
   function advance(direction) {
     leftCurrent = (leftCurrent + direction + pairs.length) % pairs.length;
-    rightCurrent = leftCurrent;
-    leftCuts = 0;
-  }
-
-  function alternate() {
-    if (leftCuts === 3) {
-      rightCurrent = (rightCurrent + 1) % pairs.length;
-      leftCuts = 0;
-    } else {
-      leftCurrent = (leftCurrent + 1) % pairs.length;
-      leftCuts += 1;
-    }
+    rightCurrent = (rightCurrent + direction + pairs.length) % pairs.length;
   }
 
   function updateCutInterval(event) {
     if (event.pointerType === 'touch') return;
-    const { left, top, width, height } = event.currentTarget.getBoundingClientRect();
-    const x = (event.clientX - left) / width * 2 - 1;
-    const y = (event.clientY - top) / height * 2 - 1;
-    const distance = Math.min(1, Math.hypot(x, y));
-    cutInterval = distance < 0.5
-      ? CENTER_CUT_INTERVAL_MS + distance * 2 * (DEFAULT_CUT_INTERVAL_MS - CENTER_CUT_INTERVAL_MS)
-      : DEFAULT_CUT_INTERVAL_MS + (distance - 0.5) * 2 * (EDGE_CUT_INTERVAL_MS - DEFAULT_CUT_INTERVAL_MS);
+    const { left, width } = event.currentTarget.getBoundingClientRect();
+    const position = (event.clientX - left) / width;
+    const distance = Math.abs(position - 0.5);
+    // Keep the middle third at full speed, then ease toward either edge.
+    const edgeProgress = Math.min(1, Math.max(0, (distance - 1 / 6) * 3));
+    const slowdown = edgeProgress ** 2;
+    const interval = CENTER_CUT_INTERVAL_MS + slowdown * (EDGE_CUT_INTERVAL_MS - CENTER_CUT_INTERVAL_MS);
+    if (position < 0.5) {
+      leftInterval = interval;
+      rightInterval = DEFAULT_CUT_INTERVAL_MS * 3;
+    } else {
+      leftInterval = DEFAULT_CUT_INTERVAL_MS;
+      rightInterval = interval;
+    }
   }
 
   onMount(() => {
@@ -105,15 +101,23 @@
       img.onerror = resolve;
       img.src = src;
     }))).then(() => { if (mounted) ready = true; });
-    let lastCut;
+    let lastLeftCut;
+    let lastRightCut;
     let frame = requestAnimationFrame(tick);
 
     function tick(now) {
-      if (!playing || lastCut === undefined) {
-        lastCut = now;
-      } else if (now - lastCut >= cutInterval) {
-        alternate();
-        lastCut = now;
+      if (!playing || lastLeftCut === undefined) {
+        lastLeftCut = now;
+        lastRightCut = now;
+      } else {
+        if (now - lastLeftCut >= leftInterval) {
+          leftCurrent = (leftCurrent + 1) % pairs.length;
+          lastLeftCut = now;
+        }
+        if (now - lastRightCut >= rightInterval) {
+          rightCurrent = (rightCurrent + 1) % pairs.length;
+          lastRightCut = now;
+        }
       }
       frame = requestAnimationFrame(tick);
     }
@@ -141,7 +145,6 @@
 
 <div class="landing"
   on:pointermove|passive={updateCutInterval}
-  on:pointerleave={() => { cutInterval = DEFAULT_CUT_INTERVAL_MS; }}
   on:wheel|passive={(event) => { if (event.deltaY > 45) enter(); }}
   on:touchstart|passive={(event) => { touchStart = event.touches[0].clientY; }}
   on:touchend|passive={(event) => { if (touchStart - event.changedTouches[0].clientY > 65) enter(); }}>
