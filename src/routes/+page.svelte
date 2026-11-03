@@ -13,7 +13,7 @@
 
   let entranceOpen = true;
   let introOpen = true;
-  let introZoom = 0;
+  let introZoom = 50;
   let introView = 'work';
   let selectedProjectId = 0;
   async function openIntroProject(event) {

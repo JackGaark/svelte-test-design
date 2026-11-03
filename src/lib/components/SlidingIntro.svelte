@@ -1,7 +1,5 @@
 <script>
   import { createEventDispatcher, onMount } from 'svelte';
-  import { tweened } from 'svelte/motion';
-  import { cubicOut } from 'svelte/easing';
   import { introLayouts } from './intro-layouts';
   import { featuredProjects } from './project-details';
   import ProjectIndex from './ProjectIndex.svelte';
@@ -12,10 +10,19 @@
   export let initialView = 'work';
   let view = initialView;
   let reducedMotion = true;
-  let snappingZoom = false;
-  let snapFrame = 0;
-  const animatedZoom = tweened(zoom);
+  let animatedZoom = zoom;
+  let zoomTrack;
+  let zoomContent;
+  let zoomScroll;
   onMount(() => {
+    let mounted = true;
+    import('locomotive-scroll').then(({ default: LocomotiveScroll }) => {
+      if (!mounted) return;
+      zoomScroll = new LocomotiveScroll({
+        lenisOptions: { wrapper: zoomTrack, content: zoomContent, smoothWheel: false },
+        scrollCallback: ({ scroll }) => { animatedZoom = scroll / 10; }
+      });
+    });
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
     const update = () => {
       reducedMotion = preference.matches;
@@ -23,33 +30,40 @@
     update();
     preference.addEventListener('change', update);
     return () => {
+      mounted = false;
+      zoomScroll?.destroy();
       preference.removeEventListener('change', update);
-      cancelAnimationFrame(snapFrame);
     };
   });
-  $: animatedZoom.set(zoom, {
-    duration: reducedMotion || snappingZoom ? 0 : 160,
-    easing: cubicOut
-  });
+  $: if (zoomScroll) {
+    zoomScroll.scrollTo(zoom * 10, { immediate: reducedMotion, lerp: 0.09 });
+    if (reducedMotion) animatedZoom = zoom;
+  } else {
+    animatedZoom = zoom;
+  }
   const dispatch = createEventDispatcher();
   let width = 1440;
   let scroller;
   let draggingZoom = false;
   $: scale = Math.max(width, 720) / 1440;
-  // The Figma middle view repeats its three-row pattern down the page.
-  const middleCards = Array.from({ length: 4 }, (_, repeat) =>
-    introLayouts[1].map((card, index) => ({
-      ...card,
-      id: repeat * introLayouts[1].length + index,
-      y: card.y + repeat * 720
-    }))
-  ).flat();
-  const availableMiddleCards = [...middleCards];
-  const smallToMiddle = introLayouts[0].map((small) => {
-    const match = availableMiddleCards.findIndex((card) => card.asset === small.asset);
-    return availableMiddleCards.splice(match, 1)[0];
+  // Build the middle view from the overview order so every card keeps its identity,
+  // crop, and place in the reading sequence at every zoom level.
+  const orderedCards = introLayouts[0].map((small, index) => {
+    const w = 120;
+    const h = w * (small.h / small.w);
+    const row = Math.floor(index / 10);
+    const column = index % 10;
+    const baseline = 293 + row * 240;
+    return {
+      ...small,
+      id: index,
+      x: 84 + column * 128,
+      y: baseline - h,
+      w,
+      h
+    };
   });
-  const largeCards = smallToMiddle.map((card, index) => {
+  const largeCards = orderedCards.map((card, index) => {
     const template = introLayouts[2].find((large) => large.asset === card.asset);
     return {
       x: 84 + index * 384,
@@ -58,68 +72,57 @@
       h: template.h
     };
   });
-  $: progress = Math.min($animatedZoom / 50, 1);
-  $: largeProgress = Math.max(0, ($animatedZoom - 50) / 50);
+  $: verticalGallery = zoom === 50 && Math.abs(animatedZoom - 50) < 0.1;
+  $: horizontalGallery = zoom === 100 && animatedZoom > 99.9;
+  $: progress = Math.max(0, Math.min(animatedZoom / 50, 1));
+  $: largeProgress = Math.max(0, Math.min((animatedZoom - 50) / 50, 1));
   $: description =
     zoom < 25 ? 'Dense overview' : zoom < 75 ? 'Medium gallery' : 'Large horizontal gallery';
   const mix = (a, b, t) => a + (b - a) * t;
-  $: cards = ($animatedZoom < 50 && zoom < 50
-    ? smallToMiddle
-    : zoom === 50
-    ? middleCards
-    : smallToMiddle).map((middle, index) => {
-      const small = $animatedZoom < 50 ? introLayouts[0][index] || middle : middle;
-      const large = largeCards[index] || middle;
-      return {
-        ...middle,
-        x: mix(mix(small.x, middle.x, progress), large.x, largeProgress),
-        y: mix(mix(small.y, middle.y, progress), large.y, largeProgress),
-        w: mix(mix(small.w, middle.w, progress), large.w, largeProgress),
-        h: mix(mix(small.h, middle.h, progress), large.h, largeProgress)
-      };
-    });
+  const clamp = (value) => Math.max(0, Math.min(value, 1));
+  const smoothstep = (value) => value * value * (3 - 2 * value);
+  const stagger = (value, index) => {
+    if (reducedMotion) return value;
+    const delay = ((index * 7) % 13) * 0.017;
+    return smoothstep(clamp((value - delay) / (1 - delay)));
+  };
+  $: cards = orderedCards.map((middle, index) => {
+    const small = introLayouts[0][index];
+    const large = largeCards[index];
+    const middleT = stagger(progress, index);
+    const largeT = stagger(largeProgress, orderedCards.length - index - 1);
+    const middleArc = reducedMotion ? 0 : Math.sin(Math.PI * middleT);
+    const largeArc = reducedMotion ? 0 : Math.sin(Math.PI * largeT);
+    const direction = (index % 5) - 2;
+    const motion = reducedMotion ? 0 : 4 * (middleArc + largeArc);
+    const cardWidth = mix(mix(small.w, middle.w, middleT), large.w, largeT);
+    const aspectRatio = small.h / small.w;
+    const largeHeight = large.w * aspectRatio;
+    const largeY = large.y + large.h - largeHeight;
+    return {
+      ...middle,
+      motion: motion * (0.6 + (index % 5) * 0.1),
+      captionSize: mix(mix(3, 6, middleT), 12, largeT),
+      captionTrailX: -direction * 3 * (middleArc + largeArc),
+      captionTrailY: (14 + (index % 4) * 3) * (middleArc + largeArc),
+      x: mix(mix(small.x, middle.x, middleT), large.x, largeT) + direction * 1.5 * (middleArc + largeArc),
+      y: mix(mix(small.y, middle.y, middleT), largeY, largeT) - (6 + (index % 4) * 2) * (middleArc + largeArc),
+      w: cardWidth,
+      h: cardWidth * aspectRatio
+    };
+  });
   $: canvasWidth = Math.max(1440, ...cards.map((c) => c.x + c.w + 84));
   $: canvasHeight = Math.max(880, ...cards.map((c) => c.y + c.h + 77));
 
   function updateZoom(event) {
-    cancelSnap();
     zoom = Number(event.currentTarget.value);
-    if (scroller) {
-      scroller.scrollLeft = 0;
-      scroller.scrollTop = 0;
-    }
-  }
-
-  function cancelSnap() {
-    cancelAnimationFrame(snapFrame);
-    snapFrame = 0;
-    snappingZoom = false;
   }
 
   function finishZoomDrag() {
     if (!draggingZoom) return;
     draggingZoom = false;
-    const target = Math.abs(zoom - 50) <= 6 ? 50 : zoom >= 94 ? 100 : null;
-    if (target === null || target === zoom) return;
-    if (reducedMotion) {
-      zoom = target;
-      return;
-    }
-    const start = zoom;
-    const startedAt = performance.now();
-    snappingZoom = true;
-    const animate = (now) => {
-      const progress = Math.min((now - startedAt) / 220, 1);
-      zoom = start + (target - start) * cubicOut(progress);
-      if (progress < 1) {
-        snapFrame = requestAnimationFrame(animate);
-      } else {
-        zoom = target;
-        snapFrame = 0;
-        snappingZoom = false;
-      }
-    };
-    snapFrame = requestAnimationFrame(animate);
+    if (Math.abs(zoom - 50) <= 6) zoom = 50;
+    else if (zoom >= 94) zoom = 100;
   }
 
   function handleZoomKeydown(event) {
@@ -130,12 +133,11 @@
       : 0;
     if (!direction) return;
     event.preventDefault();
-    cancelSnap();
     zoom = Math.max(0, Math.min(100, Math.round(zoom) + direction));
   }
 
   function handleGalleryWheel(event) {
-    if (zoom !== 100 || !scroller || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+    if (!horizontalGallery || !scroller || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
     event.preventDefault();
     scroller.scrollLeft += event.deltaY;
   }
@@ -147,6 +149,9 @@
 />
 
 <section class="intro" aria-label="Selected work" bind:clientWidth={width}>
+  <div class="zoom-track" aria-hidden="true" bind:this={zoomTrack}>
+    <div bind:this={zoomContent}></div>
+  </div>
   <div class="guide-vertical" aria-hidden="true" />
   <div class="guide-horizontal" aria-hidden="true" />
   <header class="intro-header">
@@ -195,8 +200,7 @@
         on:input={updateZoom}
         on:keydown={handleZoomKeydown}
         on:pointerdown={() => {
-          cancelSnap();
-          draggingZoom = true;
+                draggingZoom = true;
         }}
         aria-label="Image size"
         aria-valuetext={description}
@@ -204,8 +208,8 @@
     </div>
     <div
       class="gallery-scroll"
-      class:vertical={zoom === 50}
-      class:horizontal={zoom === 100}
+      class:vertical={verticalGallery}
+      class:horizontal={horizontalGallery}
       bind:this={scroller}
       on:wheel|nonpassive={handleGalleryWheel}
     >
@@ -213,9 +217,9 @@
         {#each cards as card (card.id)}
           <button
             class="image-card"
-            style={`left:${card.x * scale}px;top:${card.y * scale}px;width:${
+            style={`transform:translate(${card.x * scale}px,${card.y * scale}px);width:${
               card.w * scale
-            }px;--caption-size:${mix(mix(3, 6, progress), 12, largeProgress) * scale}px;`}
+            }px;--caption-size:${card.captionSize * scale}px;--caption-motion:${card.motion}px;--caption-trail-x:${card.captionTrailX}px;--caption-trail-y:${card.captionTrailY}px;`}
             aria-label={`View ${featuredProjects[card.asset].name}`}
             on:click={() => dispatch('select', featuredProjects[card.asset].projectId)}
           >
@@ -241,6 +245,16 @@
 </section>
 
 <style>
+  .zoom-track {
+    position: fixed;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .zoom-track > div { height: 1001px; }
+
   .guide-vertical,
   .guide-horizontal {
     position: fixed;
@@ -389,6 +403,9 @@
   }
   .image-card {
     position: absolute;
+    top: 0;
+    left: 0;
+    contain: layout;
     display: block;
     padding: 0;
     margin: 0;
@@ -398,6 +415,7 @@
     color: black;
     text-align: left;
     cursor: pointer;
+    will-change: transform;
   }
   .image-card img {
     display: block;
@@ -412,9 +430,18 @@
     font-size: var(--caption-size);
     line-height: 1;
     color: #000;
+    transform: translate(var(--caption-trail-x), var(--caption-trail-y));
+    will-change: transform;
   }
   .caption > span {
     display: block;
+    transform: translateY(var(--caption-motion));
+  }
+  .caption > span:nth-child(2) {
+    transform: translateY(calc(var(--caption-motion) * 2));
+  }
+  .caption > span:nth-child(3) {
+    transform: translateY(calc(var(--caption-motion) * 3));
   }
   .image-card:hover,
   .image-card:active {
@@ -438,6 +465,7 @@
     outline: 2px solid #bd62ff;
   }
   @media (max-width: 720px) {
+    .caption { font-size: max(6px, var(--caption-size)); }
     .control {
       top: 46px;
     }
@@ -449,9 +477,6 @@
     input::-moz-range-thumb {
       width: 25px;
       height: 25px;
-    }
-    .caption {
-      font-size: max(6px, var(--caption-size));
     }
   }
 </style>

@@ -99,22 +99,32 @@
       img.onerror = resolve;
       img.src = src;
     }))).then(() => { if (mounted) ready = true; });
-    let lastLeftCut;
-    let lastRightCut;
+    const TEMPO_RESPONSE_MS = 180;
+    let lastFrame;
+    let leftRate = 1 / leftInterval;
+    let rightRate = 1 / rightInterval;
+    let leftBeat = 0;
+    let rightBeat = 0;
     let frame = requestAnimationFrame(tick);
 
     function tick(now) {
-      if (!playing || lastLeftCut === undefined) {
-        lastLeftCut = now;
-        lastRightCut = now;
-      } else {
-        if (now - lastLeftCut >= leftInterval) {
+      const elapsed = Math.min(now - (lastFrame ?? now), 50);
+      lastFrame = now;
+
+      if (playing) {
+        const blend = 1 - Math.exp(-elapsed / TEMPO_RESPONSE_MS);
+        leftRate += (1 / leftInterval - leftRate) * blend;
+        rightRate += (1 / rightInterval - rightRate) * blend;
+        leftBeat += elapsed * leftRate;
+        rightBeat += elapsed * rightRate;
+
+        if (leftBeat >= 1) {
           leftCurrent = (leftCurrent + 1) % pairs.length;
-          lastLeftCut = now;
+          leftBeat -= 1;
         }
-        if (now - lastRightCut >= rightInterval) {
+        if (rightBeat >= 1) {
           rightCurrent = (rightCurrent + 1) % pairs.length;
-          lastRightCut = now;
+          rightBeat -= 1;
         }
       }
       frame = requestAnimationFrame(tick);
@@ -171,7 +181,7 @@
   </button>
 
   <nav aria-label="Main navigation">
-    <button class="active" aria-current="page" on:click={enter}>Work</button>
+    <button aria-current="page" on:click={enter}>Work</button>
     <button on:click={enter}>Index</button>
     <button on:click={() => dispatch('studio')}>Studio</button>
   </nav>
@@ -188,15 +198,15 @@
   .panel img { position: absolute; max-width: none; display: block; }
   .panel .sequence-image { position: absolute; display: block; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .playback { position: absolute; right: 16px; bottom: 16px; min-width: 44px; min-height: 44px; color: white; font: 10px 'Opposit-Medium', Arial, sans-serif; text-shadow: 0 1px 4px #000; }
-  .still-life img { width: 208.45%; height: 224.04%; left: -68.06%; top: -58.14%; }
-  .portrait img { width: 155.13%; height: 169.09%; left: -27.56%; top: -34.55%; }
+  .still-life img { width: 208.45%; height: auto; left: -68.06%; top: -58.14%; }
+  .portrait img { width: 155.13%; height: auto; left: -27.56%; top: -34.55%; }
   button { border: 0; border-radius: 0; margin: 0; padding: 0; background: transparent; cursor: pointer; }
   button:focus-visible { outline: 2px solid #bd62ff; outline-offset: 4px; }
   .wordmark { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); }
   .wordmark img { display: block; width: 64px; height: 27px; }
   nav { position: absolute; bottom: 41px; left: 50%; transform: translateX(-50%); width: 191px; height: 47px; background: white; display: flex; align-items: center; justify-content: space-evenly; }
   nav button { font-family: 'Opposit-Medium', Arial, sans-serif; font-size: 10px; font-weight: 500; line-height: 14px; text-transform: uppercase; color: #000; min-height: 44px; padding: 0 8px; }
-  nav .active, nav button:hover { color: #bd62ff; }
+  nav button:hover { color: #bd62ff; }
   @media (max-width: 600px) {
     nav { bottom: max(24px, env(safe-area-inset-bottom)); }
   }
